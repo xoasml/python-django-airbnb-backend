@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "python-django-airbnb-backend"
+version = "0.1.0"
+description = ""
+authors = ["TaeHoon <31303655+xoasml@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^5.0.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
