@@ -13,6 +13,10 @@ class ExperienceAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
+    list_filter = (
+        "category",
+    )
+
 
 @admin.register(Perk)
 class PerksAdmin(admin.ModelAdmin):
