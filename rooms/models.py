@@ -86,4 +86,4 @@ class Amenity(CommonModel):
         return self.name
 
     class Meta:
-        verbose_name_plural = "Amenities"
+        verbose_name_plural = "amenities"
