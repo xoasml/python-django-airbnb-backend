@@ -2,7 +2,12 @@ from rest_framework.views import APIView
 from django.db import transaction
 from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound, NotAuthenticated, ParseError, PermissionDenied
+from rest_framework.exceptions import (
+    NotFound,
+    NotAuthenticated,
+    ParseError,
+    PermissionDenied,
+)
 from .models import Amenity, Room
 from categories.models import Category
 from .serializer import AmenitySerializer, RoomListSerializer, RoomDetailSerializer
@@ -60,7 +65,11 @@ class AmenityDetail(APIView):
 class Rooms(APIView):
     def get(self, request):
         all_room = Room.objects.all()
-        serializer = RoomListSerializer(all_room, many=True)
+        serializer = RoomListSerializer(
+            all_room,
+            context={"request": request},
+            many=True,
+        )
         return Response(serializer.data)
 
     def post(self, request):
@@ -106,7 +115,10 @@ class RoomDetail(APIView):
 
     def get(self, request, pk):
         room = self.get_object(pk)
-        serializer = RoomDetailSerializer(room)
+        serializer = RoomDetailSerializer(
+            room,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def put(self, request, pk):
@@ -130,7 +142,9 @@ class RoomDetail(APIView):
                         if category.kind != "rooms":
                             raise ParseError("category의 kind가 rooms이 아닙니다.")
                     except Category.DoesNotExist:
-                        raise NotFound(f"'category' : {category_pk} 는 유효 하지 않습니다.")
+                        raise NotFound(
+                            f"'category' : {category_pk} 는 유효 하지 않습니다."
+                        )
 
                     room = serializer.save(category=category)
 
@@ -142,7 +156,9 @@ class RoomDetail(APIView):
                             amenity = Amenity.objects.get(pk=amenity_pk)
                             amenity_list.append(amenity)
                         except Amenity.DoesNotExist:
-                            raise NotFound(f"'amenities' : {amenity_pk} 는 유요 하지 않습니다.")
+                            raise NotFound(
+                                f"'amenities' : {amenity_pk} 는 유요 하지 않습니다."
+                            )
 
                     room = serializer.save(amenities=amenity_list)
 
@@ -158,3 +174,8 @@ class RoomDetail(APIView):
             raise PermissionDenied
         room.delete()
         return Response(status=HTTP_204_NO_CONTENT)
+
+
+# class RoomReviews(APIView):
+
+
