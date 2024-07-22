@@ -2,15 +2,11 @@ from rest_framework.views import APIView
 from django.db import transaction
 from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.response import Response
-from rest_framework.exceptions import (
-    NotFound,
-    NotAuthenticated,
-    ParseError,
-    PermissionDenied,
-)
+from rest_framework.exceptions import (NotFound, NotAuthenticated, ParseError, PermissionDenied)
 from .models import Amenity, Room
 from categories.models import Category
 from .serializer import AmenitySerializer, RoomListSerializer, RoomDetailSerializer
+from reviews.serializers import ReviewSerializer
 
 
 class Amenities(APIView):
@@ -176,6 +172,59 @@ class RoomDetail(APIView):
         return Response(status=HTTP_204_NO_CONTENT)
 
 
-# class RoomReviews(APIView):
+class RoomReviews(APIView):
+
+    def get_object(self, pk):
+        try:
+            return Room.objects.get(pk=pk)
+        except Room.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        try:
+            page = request.query_params.get("page", 1)
+            page = int(page)
+        except ValueError:
+            page = 1
+        page_size = 3
+        start = (page - 1) * page_size
+        end = start + page_size
+        room = self.get_object(pk)
+        serializer = ReviewSerializer(
+            room.reviews.all()[start:end],
+            many=True,
+        )
+        return Response(serializer.data)
+
+
+class RoomAmenities(APIView):
+
+    def get_object(self, pk):
+        try :
+            room = Room.objects.get(pk=pk)
+        except Room.DoesNotExist:
+            raise NotFound
+        return room
+
+
+    def get(self, request, pk):
+        room = self.get_object(pk)
+
+        page = request.query_params.get("page", 1)
+        try:
+            page = int(page)
+        except ValueError:
+            page = 1
+
+        page_size = 3
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        serializer = AmenitySerializer(
+            room.amenities.all()[start:end],
+            many=True,
+        )
+
+        return Response(serializer.data)
 
 
