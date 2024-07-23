@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Amenity, Room
 from users.serializers import TinyUserSerializer
 from categories.serializers import CategorySerializer
+from medias.serializers import PhotoSerializer
+from wishlists.models import Wishlist
 
 
 class AmenitySerializer(serializers.ModelSerializer):
@@ -17,7 +19,9 @@ class RoomDetailSerializer(serializers.ModelSerializer):
     owner = TinyUserSerializer(read_only=True)
     amenities = AmenitySerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField()
+    photos = PhotoSerializer(many=True, read_only=True)
+    is_liked = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField() # 펑션의 값을 rating 으로 사용
 
 
 
@@ -32,6 +36,9 @@ class RoomDetailSerializer(serializers.ModelSerializer):
         request = self.context['request']
         return room.owner == request.user
 
+    def get_is_liked(self, room):
+        request = self.context['request']
+        return Wishlist.objects.filter(user=request.user, rooms__pk=room.pk).exists()
 
 class RoomListSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
@@ -47,6 +54,7 @@ class RoomListSerializer(serializers.ModelSerializer):
             "price",
             "rating",
             "is_owner",
+            "photos",
         )
 
     def get_rating(self, room):
