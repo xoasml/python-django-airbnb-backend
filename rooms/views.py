@@ -270,7 +270,6 @@ class RoomPhotos(APIView):
 
 
 class RoomBookings(APIView):
-
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_object(self, pk):
@@ -294,7 +293,12 @@ class RoomBookings(APIView):
         room = self.get_object(pk)
         serializer = CreateBookingSerializer(data=request.data)
         if serializer.is_valid():
-            pass
-            # return PublicBookingSerializer(serializer.save()).data
+            booking = serializer.save(
+                room=room,
+                user=request.user,
+                kind=Booking.BookingKindChoices.ROOMS,
+            )
+            serializer = PublicBookingSerializer(booking)
+            return Response(serializer.data)
         else:
             return Response(serializer.errors)

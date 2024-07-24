@@ -30,7 +30,7 @@ class User(AbstractUser):
         editable=False,
     )
 
-    avatar = models.ImageField(blank=True)
+    avatar = models.URLField(blank=True)
     name = models.CharField(
         max_length=150,
         default="",
