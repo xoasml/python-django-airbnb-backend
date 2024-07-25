@@ -1,6 +1,8 @@
+from django.db import transaction
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -10,7 +12,11 @@ from .serializers import (
     PerkSerializer,
     ExperienceListSerializer,
     CreateExperienceSerializer,
+    DetailExperienceSerializer,
+    TinyPerkSerializer,
 )
+
+from categories.models import Category
 
 
 class Perks(APIView):
@@ -85,3 +91,86 @@ class Experiences(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ExperienceDetail(APIView):
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self, pk):
+        try:
+            return Experience.objects.get(pk=pk)
+        except Experience.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        experience = self.get_object(pk=pk)
+        serializer = DetailExperienceSerializer(experience)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        experience = self.get_object(pk=pk)
+        serializer = DetailExperienceSerializer(
+            experience,
+            data=request.data,
+            partial=True,
+        )
+
+        if serializer.is_valid():
+            if transaction.atomic():
+                experience = serializer.save()
+                if request.data.get("category"):
+                    try:
+                        category = Category.objects.get(pk=request.data.get("category"))
+                    except Category.DoesNotExist:
+                        raise NotFound("그런 category 없어요")
+
+                    if category.kind != Category.CategoryKindChoices.EXPERIENCES:
+                        raise ParseError("Is not experience category")
+
+                    experience = serializer.save(category=category)
+
+                if request.data.get("perks"):
+                    try:
+                        perks = []
+                        for perk in request.data.get("perks"):
+                            perks.append(Perk.objects.get(pk=perk))
+                    except Perk.DoesNotExist:
+                        raise NotFound("그런 perks 없어요")
+
+                    experience = serializer.save(perks=perks)
+
+                serializer = DetailExperienceSerializer(experience)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def delete(self, request, pk):
+        experience = self.get_object(pk=pk)
+        experience.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ExperiencesPerks(APIView):
+
+    def get_object(self, pk):
+        try:
+            return Experience.objects.get(pk=pk)
+        except Experience.DoesNotExist:
+            raise NotFound("Experience 가 없어요")
+
+    def get(self, request, pk):
+
+        try:
+            page = request.query_params.get("page", 1)
+            page = int(page)
+        except ValueError:
+            page = 1
+        page_size = settings.PAGE_SIZE
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        experience = self.get_object(pk)
+        perks = experience.perks.all()[start:end]
+        serializer = TinyPerkSerializer(perks, many=True)
+        return Response(serializer.data)
