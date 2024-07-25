@@ -27,7 +27,10 @@ class Experience(CommonModel):
     )
     start = models.TimeField()
     end = models.TimeField()
-    description = models.TextField()
+    description = models.TextField(
+        null=True,
+        blank=True,
+    )
     perks = models.ManyToManyField(
         "experiences.Perk",
     )
@@ -36,11 +39,21 @@ class Experience(CommonModel):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="experiences"
+        related_name="experiences",
     )
 
     def __str__(self) -> str:
         return self.name
+
+    def rating(self):
+        count = self.reviews.count()
+        if count == 0:
+            return 0
+        else:
+            total_rating = 0
+            for reviews in self.reviews.all().values("rating"):
+                total_rating += reviews["rating"]
+            return round(total_rating / count)
 
 
 class Perk(CommonModel):
