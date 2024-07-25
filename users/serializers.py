@@ -12,6 +12,18 @@ class TinyUserSerializer(ModelSerializer):
         )
 
 
+class PublicUserSerializer(ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            "name",
+            "avatar",
+            "username",
+            "reviews",
+        )
+
+
 class PrivateUserSerializer(ModelSerializer):
     class Meta:
         model = User

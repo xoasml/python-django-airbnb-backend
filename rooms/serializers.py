@@ -21,9 +21,7 @@ class RoomDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     photos = PhotoSerializer(many=True, read_only=True)
     is_liked = serializers.SerializerMethodField()
-    rating = serializers.SerializerMethodField() # 펑션의 값을 rating 으로 사용
-
-
+    rating = serializers.SerializerMethodField()  # 펑션의 값을 rating 으로 사용
 
     class Meta:
         model = Room
@@ -33,12 +31,13 @@ class RoomDetailSerializer(serializers.ModelSerializer):
         return room.rating()
 
     def get_is_owner(self, room):
-        request = self.context['request']
+        request = self.context["request"]
         return room.owner == request.user
 
     def get_is_liked(self, room):
-        request = self.context['request']
+        request = self.context["request"]
         return Wishlist.objects.filter(user=request.user, rooms__pk=room.pk).exists()
+
 
 class RoomListSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
@@ -61,5 +60,15 @@ class RoomListSerializer(serializers.ModelSerializer):
         return room.rating()
 
     def get_is_owner(self, room):
-        request = self.context['request']
+        request = self.context["request"]
         return room.owner == request.user
+
+
+class TinyRoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = (
+            "name",
+            "country",
+            "city",
+        )
