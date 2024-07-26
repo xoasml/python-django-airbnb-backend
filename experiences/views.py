@@ -6,6 +6,12 @@ from rest_framework.exceptions import NotFound, ParseError
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from categories.models import Category
+from bookings.models import Booking
+from bookings.serializers import (
+    PublicBookingSerializer,
+    CreateExperiencesBookingSerializer,
+)
 
 from .models import Perk, Experience
 from .serializers import (
@@ -15,8 +21,6 @@ from .serializers import (
     DetailExperienceSerializer,
     TinyPerkSerializer,
 )
-
-from categories.models import Category
 
 
 class Perks(APIView):
@@ -174,3 +178,41 @@ class ExperiencesPerks(APIView):
         perks = experience.perks.all()[start:end]
         serializer = TinyPerkSerializer(perks, many=True)
         return Response(serializer.data)
+
+
+class ExperienceBookings(APIView):
+
+    def get_object(self, pk):
+        try:
+            return Experience.objects.get(pk=pk)
+        except Experience.DoesNotExist:
+            raise NotFound("존재 하지 않는 Experience 입니다.")
+
+    def get(self, request, pk):
+        experience = self.get_object(pk)
+        bookings = experience.bookings.all()
+
+        if bookings.exists():
+            serializer = PublicBookingSerializer(bookings, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def post(self, request, pk):
+        experience = self.get_object(pk=pk)
+        serializer = CreateExperiencesBookingSerializer(data=request.data)
+
+        if serializer.is_valid():
+
+            bookings = serializer.save(
+                experience=experience,
+                kind=Booking.BookingKindChoices.EXPERIENCE,
+                user_id=request.user.pk,
+            )
+            serializer = PublicBookingSerializer(bookings)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors)
+
+
+# class ExperiencesBooking

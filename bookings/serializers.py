@@ -4,7 +4,30 @@ from .models import Booking
 from rooms.serializers import TinyRoomSerializer
 
 
-class CreateBookingSerializer(serializers.ModelSerializer):
+class CreateExperiencesBookingSerializer(serializers.ModelSerializer):
+
+    experience_date = serializers.DateField(required=True)
+    guests = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Booking
+        fields = (
+            "experience_date",
+            "guests",
+        )
+
+    def validate_experience_date(self, value):
+        now = timezone.localtime(timezone.now()).date()
+        if now >= value:
+            raise serializers.ValidationError("현재 날짜 이후에 예약 할 수 있습니다.")
+
+        if Booking.objects.filter(experience_date=value).exists():
+            raise serializers.ValidationError("예약이 마감 됐습니다.")
+
+        return value
+
+
+class CreateRoomsBookingSerializer(serializers.ModelSerializer):
 
     check_in = serializers.DateField(required=True)
     check_out = serializers.DateField(required=True)
@@ -55,7 +78,7 @@ class PublicBookingSerializer(serializers.ModelSerializer):
             "pk",
             "check_in",
             "check_out",
-            "experience_time",
+            "experience_date",
             "guests",
         )
 
@@ -69,6 +92,6 @@ class UsersBookingSerializer(serializers.ModelSerializer):
         fields = (
             "check_in",
             "check_out",
-            "experience_time",
+            "experience_date",
             "room",
         )

@@ -30,7 +30,7 @@ class Booking(CommonModel):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="bookings"
+        related_name="bookings",
     )
     check_in = models.DateField(
         null=True,
@@ -40,11 +40,11 @@ class Booking(CommonModel):
         null=True,
         blank=True,
     )
-    experience_time = models.DateTimeField(
+    experience_date = models.DateField(
         null=True,
         blank=True,
     )
     guests = models.PositiveIntegerField()
 
-    def __str__(self) -> str :
+    def __str__(self) -> str:
         return f"{self.kind.title()} booking for: {self.user}"
