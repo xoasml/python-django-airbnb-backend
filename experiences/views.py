@@ -200,7 +200,10 @@ class ExperienceBookings(APIView):
 
     def post(self, request, pk):
         experience = self.get_object(pk=pk)
-        serializer = CreateExperiencesBookingSerializer(data=request.data)
+        serializer = CreateExperiencesBookingSerializer(
+            data=request.data,
+            context={"experience": experience},
+        )
 
         if serializer.is_valid():
 
@@ -215,4 +218,44 @@ class ExperienceBookings(APIView):
             return Response(serializer.errors)
 
 
-# class ExperiencesBooking
+class ExperienceBookingDetail(APIView):
+
+    def get_experience(self, pk):
+        try:
+            return Experience.objects.get(pk=pk)
+        except Experience.DoesNotExist:
+            raise NotFound
+
+    def get_booking(self, booking_pk):
+        try:
+            return Booking.objects.get(pk=booking_pk)
+        except Booking.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk, booking_pk):
+        booking = self.get_booking(booking_pk=booking_pk)
+        serializer = PublicBookingSerializer(booking)
+        return Response(serializer.data)
+
+    # todo 테스트 필요
+    def put(self, request, pk, booking_pk):
+        booking = self.get_booking(booking_pk=booking_pk)
+        experience = self.get_experience(pk)
+        serializer = CreateExperiencesBookingSerializer(
+            booking,
+            data=request.data,
+            partial=True,
+            context={"experience": experience},
+        )
+
+        if serializer.is_valid():
+            booking = serializer.save()
+            serializer = PublicBookingSerializer(booking)
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def delete(self, request, pk, booking_pk):
+        booking = self.get_booking(booking_pk=booking_pk)
+        booking.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

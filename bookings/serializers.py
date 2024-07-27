@@ -21,10 +21,16 @@ class CreateExperiencesBookingSerializer(serializers.ModelSerializer):
         if now >= value:
             raise serializers.ValidationError("현재 날짜 이후에 예약 할 수 있습니다.")
 
-        if Booking.objects.filter(experience_date=value).exists():
+        return value
+
+    def validate(self, data):
+        if Booking.objects.filter(
+            experience_date=data["experience_date"],
+            experience=self.context["experience"],
+        ).exists():
             raise serializers.ValidationError("예약이 마감 됐습니다.")
 
-        return value
+        return data
 
 
 class CreateRoomsBookingSerializer(serializers.ModelSerializer):
