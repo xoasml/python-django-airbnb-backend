@@ -37,11 +37,12 @@ CUSTOM_APPS = [
     "wishlists.apps.WishlistsConfig",
     "bookings.apps.BookingsConfig",
     "medias.apps.MediasConfig",
-    "direct_messages.apps.DirectMessagesConfig"
+    "direct_messages.apps.DirectMessagesConfig",
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework.authtoken",
 ]
 
 SYSTEM_APPS = [
@@ -143,5 +144,14 @@ MEDIA_ROOT = "uploads"
 # File
 MEDIA_URL = "user-uploads/"
 
-#Pagenation
+# Pagination Default
 PAGE_SIZE = 3
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "config.authentication.TrustMeBroAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+        "config.authentication.JWTAuthentication",
+    ]
+}
