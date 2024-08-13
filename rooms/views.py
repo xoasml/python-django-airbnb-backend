@@ -1,3 +1,5 @@
+import time
+
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
@@ -128,6 +130,7 @@ class RoomDetail(APIView):
             raise NotFound
 
     def get(self, request, pk):
+        time.sleep(1)
         room = self.get_object(pk)
         serializer = RoomDetailSerializer(
             room,
@@ -197,6 +200,7 @@ class RoomReviews(APIView):
             raise NotFound
 
     def get(self, request, pk):
+        time.sleep(1)
         try:
             page = request.query_params.get("page", 1)
             page = int(page)
