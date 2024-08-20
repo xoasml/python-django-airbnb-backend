@@ -173,7 +173,7 @@ class GithubLogIn(APIView):
             try:
                 user = User.objects.get(email=user_emails[0]["email"])
                 login(request, user)
-
+                return Response(status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 user = User.objects.create(
                     username=user_data.get("login"),
