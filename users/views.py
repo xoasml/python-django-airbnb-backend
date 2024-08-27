@@ -68,6 +68,28 @@ class PublicUser(APIView):
         return Response(serializer.data)
 
 
+class SignUp(APIView):
+
+    def post(self, request):
+        
+        try:
+            User.objects.get(email=request.data.get("email"))
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "이미 존재하는 email 입니다."},)
+        except User.DoesNotExist:
+            user = User.objects.create(
+                name = request.data.get("name"),
+                email = request.data.get("email"),
+                username = request.data.get("username"),
+            )
+            
+            user.set_password(request.data.get("password"))
+            user.save()
+
+            return Response(status=status.HTTP_200_OK, data={"ok": "회원가입 성공"})
+
+        
+
+
 class ChangePassword(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -101,12 +123,17 @@ class LogIn(APIView):
             username=username,
             password=password,
         )
-
+        
         if user:
             login(request, user)
+            print("ok")
             return Response({"ok": "Welcome"})
         else:
-            return Response({"error": "wrong password"})
+            print("nogood")
+            return Response(
+                {"error": "wrong password"}, 
+                status=status.HTTP_400_BAD_REQUEST,
+                )
 
 
 class LogOut(APIView):
@@ -147,11 +174,15 @@ class GithubLogIn(APIView):
     def post(self, request):
         try:
             code = request.data.get("code")
+
+            # token 발급 받기
             access_token = requests.post(
                 f"https://github.com/login/oauth/access_token?code={code}&client_id=Ov23lir3uFzYk7Fyu6fl&client_secret={settings.SECRET_GITHUB}",
                 headers={"Accept": "application/json"},
             )
             access_token = access_token.json().get("access_token")
+
+            # token 이용해서 유저 데이터 받아오기
             user_data = requests.get(
                 "https://api.github.com/user",
                 headers={
@@ -161,6 +192,7 @@ class GithubLogIn(APIView):
             )
             user_data = user_data.json()
 
+            # token 이용해서 유저 이메일 받아오기
             user_emails = requests.get(
                 "https://api.github.com/user/emails",
                 headers={
@@ -187,3 +219,56 @@ class GithubLogIn(APIView):
                 return Response(status=status.HTTP_200_OK)
         except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class KaKaoLogin(APIView):
+
+    def post(self, request):
+        try:
+            code = request.data.get("code")
+
+            access_token = requests.post(
+                url="https://kauth.kakao.com/oauth/token",
+                headers={"Content-type": "application/x-www-form-urlencoded;charset=utf-8"},
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": "4e6252a4154f2982cadd9b0ec684cbe0",
+                    "redirect_uri": "http://127.0.0.1:3001/social/kakao",
+                    "code": code,
+                },
+            )
+            access_token = access_token.json().get("access_token")
+
+            user_data = requests.post(
+                url="https://kapi.kakao.com/v2/user/me",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+                },
+            )
+            user_data = user_data.json()
+            kakao_account = user_data.get("kakao_account")
+            profile = kakao_account.get("profile")
+            
+            try:
+                user = User.objects.get(email=f"{user_data.get("id")}@test.com")
+                login(request, user)
+                return Response(status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                user = User.objects.create(
+                    email=f"{user_data.get("id")}@test.com",
+                    username=profile.get("nickname"),
+                    name=profile.get("nickname"),
+                    avatar=profile.get("profile_image_url"),
+                )
+                #패스워드 미사용
+                user.set_unusable_password()
+                user.save()
+                login(request, user)
+                return Response(status=status.HTTP_200_OK)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
