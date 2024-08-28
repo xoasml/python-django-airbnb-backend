@@ -43,18 +43,19 @@ class Me(APIView):
 class Users(APIView):
 
     def post(self, request):
-        password = request.data.get("password")
-        if not password:
-            raise ParseError
-        serializer = serializers.PrivateUserSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            user.set_password(password)
-            user.save()
-            serializer = serializers.PrivateUserSerializer(user)
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors)
+        # password = request.data.get("password")
+        # if not password:
+        #     raise ParseError
+        # serializer = serializers.PrivateUserSerializer(data=request.data)
+        # if serializer.is_valid():
+        #     user = serializer.save()
+        #     user.set_password(password)
+        #     user.save()
+        #     serializer = serializers.PrivateUserSerializer(user)
+        #     return Response(serializer.data)
+        # else:
+        #     return Response(serializer.errors)
+        return Response(status=status.HTTP_200_OK)
 
 
 class PublicUser(APIView):
@@ -71,23 +72,24 @@ class PublicUser(APIView):
 class SignUp(APIView):
 
     def post(self, request):
-        
+
         try:
             User.objects.get(email=request.data.get("email"))
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "이미 존재하는 email 입니다."},)
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"error": "이미 존재하는 email 입니다."},
+            )
         except User.DoesNotExist:
             user = User.objects.create(
-                name = request.data.get("name"),
-                email = request.data.get("email"),
-                username = request.data.get("username"),
+                name=request.data.get("name"),
+                email=request.data.get("email"),
+                username=request.data.get("username"),
             )
-            
+
             user.set_password(request.data.get("password"))
             user.save()
 
             return Response(status=status.HTTP_200_OK, data={"ok": "회원가입 성공"})
-
-        
 
 
 class ChangePassword(APIView):
@@ -123,7 +125,7 @@ class LogIn(APIView):
             username=username,
             password=password,
         )
-        
+
         if user:
             login(request, user)
             print("ok")
@@ -131,9 +133,9 @@ class LogIn(APIView):
         else:
             print("nogood")
             return Response(
-                {"error": "wrong password"}, 
+                {"error": "wrong password"},
                 status=status.HTTP_400_BAD_REQUEST,
-                )
+            )
 
 
 class LogOut(APIView):
@@ -229,7 +231,9 @@ class KaKaoLogin(APIView):
 
             access_token = requests.post(
                 url="https://kauth.kakao.com/oauth/token",
-                headers={"Content-type": "application/x-www-form-urlencoded;charset=utf-8"},
+                headers={
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8"
+                },
                 data={
                     "grant_type": "authorization_code",
                     "client_id": "4e6252a4154f2982cadd9b0ec684cbe0",
@@ -249,26 +253,27 @@ class KaKaoLogin(APIView):
             user_data = user_data.json()
             kakao_account = user_data.get("kakao_account")
             profile = kakao_account.get("profile")
-            
+
+            test_mail = str(user_data.get("id")) + "@test.com"
+            print(test_mail)
+
             try:
-                user = User.objects.get(email=f"{user_data.get("id")}@test.com")
+
+                user = User.objects.get(email=test_mail)
                 login(request, user)
                 return Response(status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 user = User.objects.create(
-                    email=f"{user_data.get("id")}@test.com",
+                    email=test_mail,
                     username=profile.get("nickname"),
                     name=profile.get("nickname"),
                     avatar=profile.get("profile_image_url"),
                 )
-                #패스워드 미사용
+                # 패스워드 미사용
                 user.set_unusable_password()
                 user.save()
                 login(request, user)
                 return Response(status=status.HTTP_200_OK)
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
