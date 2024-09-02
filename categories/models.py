@@ -12,6 +12,7 @@ class Category(CommonModel):
     name = models.CharField(
         max_length=50,
     )
+
     kind = models.CharField(
         max_length=15,
         choices=CategoryKindChoices,
