@@ -187,4 +187,10 @@ CORS_ALLOW_CREDENTIALS = True
 # CSRF(Post Fetch allowed)
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:3001"]
 
+
+# CloudFlare Config
+CF_TOKEN = env("CF_TOKEN")
+CF_ACOUNT = env("CF_ACOUNT")
+
+# OAuth Config
 SECRET_GITHUB = env("SECRET_GITHUB")
