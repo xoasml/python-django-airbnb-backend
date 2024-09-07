@@ -63,10 +63,12 @@ class CreateRoomsBookingSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        room = self.context.get("room")
         if attrs["check_out"] <= attrs["check_in"]:
             raise serializers.ValidationError("체크인은 체크아웃 보다 작아야 합니다.")
 
         if Booking.objects.filter(
+            room=room,
             check_in__lte=attrs["check_out"],
             check_out__gte=attrs["check_in"],
         ).exists():

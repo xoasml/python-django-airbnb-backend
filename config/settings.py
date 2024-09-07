@@ -165,7 +165,7 @@ MEDIA_ROOT = "uploads"
 MEDIA_URL = "user-uploads/"
 
 # Pagination Default
-PAGE_SIZE = 3
+PAGE_SIZE = 20
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
